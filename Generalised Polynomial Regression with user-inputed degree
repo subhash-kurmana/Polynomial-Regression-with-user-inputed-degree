@@ -1,0 +1,80 @@
+#Final version of code after doing multiple cycles of Errors and learnings.
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Data
+X = np.arange(1, 9)
+Y = np.array([50,55,65,70,75,78,85,88])
+
+# Learned: scaling is crucial for higher-degree stability (avoids exploding values)
+X = (X - np.mean(X)) / np.std(X)
+
+# Visualizing data
+plt.scatter(X, Y, color='orange')
+plt.xlabel("Scaled X")
+plt.ylabel("Score (Y)")
+
+# Hyperparameters
+tol = 1e-4
+max_iter = 100000
+alpha = 1e-3   # chosen to balance convergence speed and stability
+n = len(X)
+
+# User-controlled model complexity
+d = int(input('Enter degree for polynomial: '))
+
+# Learned: initialization can influence convergence behavior
+s = [i**2 * 0.1 for i in range(1, d+1)]
+s.sort(reverse = True)
+W = np.array(s, dtype=float)
+
+# Learned: define error clearly (prediction - actual)
+def dif(W):
+    f = np.zeros(n)
+    for i in range(d):
+        f += W[i] * (X**i)
+    return f - Y
+
+# Gradient Descent
+for i in range(max_iter):
+    spare_W = W.copy()  # Learned: avoid reference issues during updates
+    
+    # Learned: compute error once per iteration for consistency
+    f = dif(spare_W)
+
+    # Gradient computation
+    grad = np.zeros(d)
+    for j in range(d):
+        grad[j] = (1/n) * np.sum(f * (X**j))
+
+    # Learned: convergence is checked using gradient magnitude
+    if np.linalg.norm(grad) < tol:
+        print("Converged at iteration:", i)
+        break
+
+    # Learned: update all weights simultaneously
+    W = W - alpha * grad
+
+# Prediction function
+def y_pred(x):
+    y = 0
+    for i in range(d):
+        y += W[i] * x**i
+    return y
+
+# Learned: MSE is a good measure of model fit
+mse = np.mean((y_pred(X) - Y)**2)
+
+# Smooth curve for visualization
+x_smooth = np.linspace(min(X), max(X), 100)
+y_smooth = y_pred(x_smooth)
+
+# Plot model fit
+plt.plot(x_smooth, y_smooth, color='hotpink', label='Polynomial Fit')
+plt.title(f'Polynomial Regression for order: {d-1}')
+plt.legend()
+plt.show()
+
+# Results
+print("Final Weights:", W)
+print("Mean Squared Error:", mse)
